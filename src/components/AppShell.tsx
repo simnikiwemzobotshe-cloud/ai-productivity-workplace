@@ -35,7 +35,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    setOpen(false);
+  }, [path]);
   useEffect(() => {
     if (!localStorage.getItem("notice_seen")) setNotice(true);
   }, []);

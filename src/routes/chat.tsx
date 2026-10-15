@@ -33,7 +33,9 @@ function ChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [msgs, loading]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs, loading]);
   useEffect(() => { if (!loading) inputRef.current?.focus(); }, [loading]);
 
   async function ask(history: ChatTurn[]) {

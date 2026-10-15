@@ -24,7 +24,9 @@ const TOOLS = [
 
 function Dashboard() {
   const [hasKey, setHasKey] = useState<boolean | null>(null);
-  useEffect(() => setHasKey(!!getApiKey()), []);
+  useEffect(() => {
+    setHasKey(!!getApiKey());
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl">
