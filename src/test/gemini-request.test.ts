@@ -33,13 +33,19 @@ afterEach(() => {
 const bodyOf = (c: Call) => JSON.parse(c.init.body as string);
 
 describe("Gemini request", () => {
+  const callAt = (i: number): Call => {
+    const c = calls[i];
+    if (!c) throw new Error(`expected request #${i + 1}, only ${calls.length} were made`);
+    return c;
+  };
+
   it("uses the current stable model", () => {
     expect(MODEL).toBe("gemini-3.8-flash");
   });
 
   it("sends the key in a header, never in the URL", async () => {
     await callGemini({ system: "sys", contents: [{ role: "user", text: "hi" }] });
-    const [call] = calls;
+    const call = callAt(0);
     expect(call.url).toBe(ENDPOINT);
     expect(call.url).not.toContain("key=");
     expect((call.init.headers as Record<string, string>)["x-goog-api-key"]).toBe(KEY);
@@ -47,10 +53,10 @@ describe("Gemini request", () => {
 
   it("asks for low reasoning effort and JSON output when requested", async () => {
     await callGemini({ system: "sys", contents: [{ role: "user", text: "hi" }] });
-    expect(bodyOf(calls[0]).generationConfig).toEqual({ thinkingConfig: { thinkingLevel: "low" } });
+    expect(bodyOf(callAt(0)).generationConfig).toEqual({ thinkingConfig: { thinkingLevel: "low" } });
 
     await callGemini({ system: "sys", contents: [{ role: "user", text: "hi" }], json: true });
-    expect(bodyOf(calls[1]).generationConfig).toEqual({
+    expect(bodyOf(callAt(1)).generationConfig).toEqual({
       thinkingConfig: { thinkingLevel: "low" },
       responseMimeType: "application/json",
     });
