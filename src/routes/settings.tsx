@@ -3,7 +3,7 @@ import { CheckCircle2, Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/AppShell";
 import { ErrorBox, Spinner } from "@/components/ResultBits";
-import { callGemini, clearApiKey, getApiKey, setApiKey } from "@/lib/gemini";
+import { callGemini, clearApiKey, getApiKey, MODEL, setApiKey } from "@/lib/gemini";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
