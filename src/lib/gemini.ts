@@ -71,7 +71,7 @@ export async function callGemini(opts: {
     // thinkingBudget used by the 2.5 series.
     thinkingConfig: { thinkingLevel: opts.thinkingLevel ?? "low" },
   };
-  if (opts.json) generationConfig.responseMimeType = "application/json";
+  if (opts.json) generationConfig["responseMimeType"] = "application/json";
 
   let res: Response;
   try {
