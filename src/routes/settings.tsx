@@ -59,6 +59,9 @@ function SettingsPage() {
               Get a free key from{" "}
               <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="font-medium text-primary underline">Google AI Studio</a>.
             </p>
+            <p className="text-xs text-muted-foreground">
+              All tools run on <span className="font-mono font-medium text-foreground">{MODEL}</span>.
+            </p>
           </div>
         </div>
         <div className="relative">
