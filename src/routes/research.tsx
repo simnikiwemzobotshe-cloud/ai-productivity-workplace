@@ -53,7 +53,7 @@ function ResearchPage() {
       }
       setLoading("Analysing…");
       const text = await callGemini({ system: buildSystemPrompt(PROMPTS.research), json: true, contents: [{ role: "user", text: prompt }] });
-      const j = parseJSON<Record<string, unknown>>(text);
+      const j = parseJSON<{ summary?: unknown; keyPoints?: unknown; insights?: unknown; recommendations?: unknown }>(text);
       setResult({
         summary: String(j.summary ?? ""),
         keyPoints: toList(j.keyPoints),
