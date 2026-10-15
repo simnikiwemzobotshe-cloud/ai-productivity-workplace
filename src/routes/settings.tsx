@@ -23,7 +23,9 @@ function SettingsPage() {
   const [status, setStatus] = useState<"" | "saved" | "testing" | "ok">("");
   const [error, setError] = useState("");
 
-  useEffect(() => setKey(getApiKey()), []);
+  useEffect(() => {
+    setKey(getApiKey());
+  }, []);
 
   const save = () => {
     setError("");
