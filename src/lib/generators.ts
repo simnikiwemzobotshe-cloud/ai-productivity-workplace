@@ -16,7 +16,7 @@ function splitDetails(details: string): string[] {
 function firstName(recipient: string) {
   const r = recipient.trim();
   if (!r) return "there";
-  if (r.includes("@")) return cap(r.split("@")[0].split(/[._-]/)[0]);
+  if (r.includes("@")) return cap(r.split("@")[0]?.split(/[._-]/)[0] ?? "");
   return r.split(/\s+/)[0];
 }
 
