@@ -3,7 +3,7 @@
 export type Tone = "Formal" | "Friendly" | "Persuasive";
 
 const pick = <T,>(arr: T[], seed: number): T => arr[Math.abs(seed) % arr.length] as T;
-const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const clean = (s: string) => s.trim().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
 
 function splitDetails(details: string): string[] {
@@ -118,7 +118,7 @@ function topicFrom(input: string): { topic: string; isUrl: boolean } {
   return { topic: t, isUrl: false };
 }
 
-const lenses = [
+const lenses: [string, string, string, string][] = [
   ["adoption", "cost", "skills", "governance"],
   ["customer value", "operational efficiency", "risk", "measurement"],
   ["market trends", "competition", "team readiness", "tooling"],
