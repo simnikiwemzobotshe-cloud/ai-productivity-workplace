@@ -2,7 +2,7 @@
 
 export type Tone = "Formal" | "Friendly" | "Persuasive";
 
-const pick = <T,>(arr: T[], seed: number) => arr[Math.abs(seed) % arr.length];
+const pick = <T,>(arr: T[], seed: number): T => arr[Math.abs(seed) % arr.length] as T;
 const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const clean = (s: string) => s.trim().replace(/\s+/g, " ").replace(/[.!?]+$/, "");
 
