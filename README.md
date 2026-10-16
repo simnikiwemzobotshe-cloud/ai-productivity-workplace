@@ -1,24 +1,65 @@
-# AI Productivity Workplace
+# AI Workplace Productivity Assistant
 
-Implement exactly the screenshot and nothing else
+A modern, responsive SaaS-style dashboard concept that helps professionals with everyday workplace tasks. It includes an email drafting tool, a research assistant, and an interactive workplace chat interface. Responses are simulated from the user's input; the app does not connect to an AI service or backend.
 
-This project was built with [Lovable](https://lovable.dev).
+## Features implemented
 
-## Build with Lovable
+- **Smart Email Generator:** Draft professional emails from a recipient, purpose, and key points. Choose Formal, Friendly, or Persuasive tone, then edit, copy, or regenerate the result.
+- **AI Research Assistant:** Enter a topic or URL to receive a structured summary, insights, and recommendations. Website content is not fetched or verified.
+- **AI Chat:** Chat-style workplace assistant with suggested prompts and input-aware simulated responses. Conversation state is kept in the browser.
+- **Dashboard and navigation:** Dashboard quick actions and recent activity, with sidebar navigation to each tool.
+- **Responsive and accessible UI:** Adapts to smaller screens and supports keyboard navigation with visible focus states.
+- **Responsible AI notice:** Reminds users that responses are simulated, may be inaccurate, and should be reviewed before use.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/ff03fe5a-bed2-4f51-b073-43ad71c9dfc1).
+## Technologies and tools
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- React
+- TypeScript
+- Tailwind CSS
+- Lucide icons
+- Inter font
+- Lovable (for app generation, if used)
 
-## Development
+## Project structure
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+The application source was not present when this README was prepared. After exporting or syncing the app from Lovable, the repository will typically contain files organized like this:
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```text
+ai-workplace-productivity-assistant/
+├── public/                 # Static assets
+├── src/
+│   ├── components/         # Reusable UI components
+│   ├── pages/              # Dashboard and productivity tools
+│   ├── App.tsx             # Application routes and layout
+│   └── main.tsx            # App entry point
+├── package.json            # Dependencies and scripts
+├── index.html
+└── README.md
 ```
+
+## Setup
+
+1. Export or sync the Lovable project into a local folder.
+2. Open that folder in a terminal and install its dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+4. Open the local URL shown in the terminal. For a Vite project, this is commonly `http://localhost:5173`.
+
+This is a frontend-only project. No backend, database, authentication, or AI API key is required. If the exported project uses different package scripts, follow the commands in its `package.json`.
+
+## Team
+
+- **Author:** Simnikiwe Mzobotshe
+GitHub: `https://pixel-perfect-palette-6905.lovable.app`
+## License
+
+No license has been specified. Add a `LICENSE` file if you intend to distribute this project as open source.
