@@ -100,7 +100,7 @@ describe("Gemini request", () => {
     );
     await expect(
       callGemini({ system: "sys", contents: [{ role: "user", text: "hi" }] }),
-    ).rejects.toThrow(new AIError("Your API key is invalid. Update it on the Settings page."));
+    ).rejects.toThrow(new AIError("Authentication error: your API key is invalid. Update it on the Settings page."));
   });
 });
 
@@ -112,5 +112,33 @@ describe("parseJSON", () => {
 
   it("fails clearly on unusable output", () => {
     expect(() => parseJSON("not json at all")).toThrow(/Couldn't read the AI response/);
+  });
+});
+
+describe("error kinds and sources", () => {
+  const fail = (status: number, error: object) =>
+    vi.stubGlobal("fetch", vi.fn(async () => response({ error }, status)));
+  const run = () => callGemini({ system: "s", contents: [{ role: "user", text: "hi" }] });
+
+  it("labels quota, overload, server and network failures distinctly, with one request each", async () => {
+    fail(429, { message: "Quota exceeded", status: "RESOURCE_EXHAUSTED" });
+    await expect(run()).rejects.toThrow(/Quota or rate limit/);
+    fail(503, { message: "overloaded", status: "UNAVAILABLE" });
+    await expect(run()).rejects.toThrow(/overloaded/);
+    fail(500, { message: "Internal error", status: "INTERNAL" });
+    await expect(run()).rejects.toThrow(/Google server error \(500\).*Internal error/);
+    expect((fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length).toBe(1);
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("fail"); }));
+    await expect(run()).rejects.toThrow(/Network error/);
+  });
+
+  it("returns grounded sources when Google Search is on", async () => {
+    const { callGeminiWithSources } = await import("@/lib/gemini");
+    vi.stubGlobal("fetch", vi.fn(async (_u: string, init: RequestInit) => {
+      expect(JSON.parse(init.body as string).tools).toEqual([{ google_search: {} }]);
+      return response({ candidates: [{ content: { parts: [{ text: "{}" }] }, groundingMetadata: { groundingChunks: [{ web: { uri: "https://a.com", title: "A" } }] } }] });
+    }));
+    const r = await callGeminiWithSources({ system: "s", contents: [{ role: "user", text: "x" }], googleSearch: true });
+    expect(r.sources).toEqual([{ url: "https://a.com", title: "A" }]);
   });
 });

@@ -46,7 +46,7 @@ function Dashboard() {
       )}
       {hasKey && (
         <p className="mb-8 inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-medium text-success">
-          <CheckCircle2 className="h-4 w-4" /> API key connected
+          <CheckCircle2 className="h-4 w-4" /> API key saved
         </p>
       )}
 

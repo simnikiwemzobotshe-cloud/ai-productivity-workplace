@@ -26,7 +26,11 @@ export type ThinkingLevel = "low" | "medium" | "high";
 export class AIError extends Error {}
 
 type Part = { text?: string; thought?: boolean };
-type Candidate = { content?: { parts?: Part[] }; finishReason?: string };
+type Candidate = {
+  content?: { parts?: Part[] };
+  finishReason?: string;
+  groundingMetadata?: { groundingChunks?: { web?: { uri?: string; title?: string } }[] };
+};
 type ApiResponse = {
   candidates?: Candidate[];
   promptFeedback?: { blockReason?: string };
@@ -41,19 +45,25 @@ const BLOCKED: Record<string, string> = {
   OTHER: "Google blocked this request for an unspecified reason.",
 };
 
-function describeError(status: number, msg: string): string {
+function describeError(status: number, msg: string, apiStatus = ""): string {
+  const detail = msg ? ` (Google said: ${msg.slice(0, 200)})` : "";
   if (/model/i.test(msg) && /not found|unsupported|unavailable|disabled|permission|denied/i.test(msg))
-    return `${MODEL} isn't available for your key yet. Try again shortly, or check the key on the Settings page.`;
-  if (status === 400 && /api key/i.test(msg))
-    return "Your API key is invalid. Update it on the Settings page.";
+    return `Unsupported model: ${MODEL} isn't available for your key yet. Check the key on the Settings page.`;
+  if ((status === 400 && /api key/i.test(msg)) || apiStatus === "UNAUTHENTICATED")
+    return "Authentication error: your API key is invalid. Update it on the Settings page.";
   if (status === 401 || status === 403)
-    return "API key rejected (permission denied). Check the key on Settings.";
-  if (status === 429) return "Rate limit reached. Wait a moment and try again.";
-  if (status === 404)
-    return "The AI model couldn't be found. Check your key on Settings and try again.";
-  if (status >= 500) return "Google's servers are having trouble right now. Try again in a moment.";
+    return "Authentication error: Google rejected your API key (permission denied). Check the key on Settings.";
+  if (status === 429 || apiStatus === "RESOURCE_EXHAUSTED")
+    return `Quota or rate limit reached for your API key. Wait a minute, or check your limits in Google AI Studio.${detail}`;
+  if (status === 404) return `Unsupported model: ${MODEL} couldn't be found for your key.`;
+  if (status === 503 || apiStatus === "UNAVAILABLE")
+    return "Google's model is overloaded right now (server error 503). Wait a few seconds and try again.";
+  if (status >= 500) return `Google server error (${status}). Try again in a moment.${detail}`;
+  if (status === 400) return `Google rejected the request (400).${detail}`;
   return msg || `Gemini request failed (${status}).`;
 }
+
+export type Source = { title: string; url: string };
 
 export async function callGemini(opts: {
   system: string;
@@ -62,6 +72,17 @@ export async function callGemini(opts: {
   /** Gemini 3 reasons before answering; "low" keeps these short tasks quick. */
   thinkingLevel?: ThinkingLevel;
 }): Promise<string> {
+  return (await callGeminiWithSources(opts)).text;
+}
+
+/** Same as callGemini; with googleSearch the answer is grounded and cited sources are returned. */
+export async function callGeminiWithSources(opts: {
+  system: string;
+  contents: ChatTurn[];
+  json?: boolean;
+  thinkingLevel?: ThinkingLevel;
+  googleSearch?: boolean;
+}): Promise<{ text: string; sources: Source[] }> {
   const key = getApiKey();
   if (!key)
     throw new AIError("No API key found. Add your Gemini API key on the Settings page.");
@@ -82,15 +103,16 @@ export async function callGemini(opts: {
         systemInstruction: { parts: [{ text: opts.system }] },
         contents: opts.contents.map((c) => ({ role: c.role, parts: [{ text: c.text }] })),
         generationConfig,
+        ...(opts.googleSearch ? { tools: [{ google_search: {} }] } : {}),
       }),
     });
   } catch {
-    throw new AIError("Network error. Check your internet connection and try again.");
+    throw new AIError("Network error: couldn't reach Google. Check your internet connection and try again.");
   }
 
   if (!res.ok) {
     const data = (await res.json().catch(() => ({}))) as ApiResponse;
-    throw new AIError(describeError(res.status, data?.error?.message ?? ""));
+    throw new AIError(describeError(res.status, data?.error?.message ?? "", data?.error?.status ?? ""));
   }
 
   const data = (await res.json().catch(() => null)) as ApiResponse | null;
@@ -119,7 +141,12 @@ export async function callGemini(opts: {
       throw new AIError("The AI returned a broken response. Try regenerating.");
     throw new AIError("The AI returned an empty response. Try regenerating.");
   }
-  return text;
+  const sources: Source[] = [];
+  for (const c of cand?.groundingMetadata?.groundingChunks ?? []) {
+    const url = c.web?.uri;
+    if (url && !sources.some((x) => x.url === url)) sources.push({ url, title: c.web?.title || url });
+  }
+  return { text, sources };
 }
 
 export function parseJSON<T>(text: string): T {

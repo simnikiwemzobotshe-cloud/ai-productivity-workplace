@@ -3,7 +3,7 @@ import { Globe, Lightbulb, ListChecks, Search, Target, FileText } from "lucide-r
 import { useState } from "react";
 import { PageHeader } from "@/components/AppShell";
 import { AutoTextarea, CopyButton, ErrorBox, RegenButton, Spinner } from "@/components/ResultBits";
-import { AIError, callGemini, parseJSON } from "@/lib/gemini";
+import { AIError, callGeminiWithSources, parseJSON, type Source } from "@/lib/gemini";
 import { buildSystemPrompt, PROMPTS } from "@/lib/prompts";
 
 export const Route = createFileRoute("/research")({
@@ -35,6 +35,7 @@ function ResearchPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [loading, setLoading] = useState("");
   const [error, setError] = useState("");
+  const [sources, setSources] = useState<Source[]>([]);
 
   async function run() {
     const v = input.trim();
@@ -42,17 +43,27 @@ function ResearchPage() {
     setError("");
     try {
       let prompt = `Research topic: ${v}`;
+      let pageSource: Source | null = null;
       if (mode === "url") {
         let url: URL;
         try { url = new URL(v.startsWith("http") ? v : `https://${v}`); } catch { throw new AIError("That URL doesn't look valid."); }
         setLoading("Reading the page…");
         const r = await fetch(`https://r.jina.ai/${url.href}`).catch(() => null);
-        if (!r || !r.ok) throw new AIError("Couldn't fetch that page. Check the URL or try a different one.");
+        if (!r) throw new AIError("Network error: couldn't reach the page reader. Check your connection.");
+        if (!r.ok) throw new AIError(`Couldn't read that page (error ${r.status}). Check the URL or try another one.`);
         const page = (await r.text()).slice(0, 30000);
+        if (page.trim().length < 200) throw new AIError("That page had no readable text to analyse. Try a different URL.");
+        pageSource = { url: url.href, title: url.hostname };
         prompt = `Source URL: ${url.href}\n\nSource text:\n${page}`;
       }
       setLoading("Analysing…");
-      const text = await callGemini({ system: buildSystemPrompt(PROMPTS.research), json: true, contents: [{ role: "user", text: prompt }] });
+      // Topic mode is grounded with Google Search so the briefing can cite real sources.
+      const { text, sources: found } = await callGeminiWithSources({
+        system: buildSystemPrompt(PROMPTS.research),
+        json: !!pageSource,
+        googleSearch: !pageSource,
+        contents: [{ role: "user", text: prompt }],
+      });
       const j = parseJSON<{ summary?: unknown; keyPoints?: unknown; insights?: unknown; recommendations?: unknown }>(text);
       setResult({
         summary: String(j.summary ?? ""),
@@ -60,6 +71,7 @@ function ResearchPage() {
         insights: toList(j.insights),
         recommendations: toList(j.recommendations),
       });
+      setSources(pageSource ? [pageSource] : found);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -128,6 +140,16 @@ function ResearchPage() {
                 </div>
               ))}
             </div>
+            {sources.length > 0 && (
+              <div className="card">
+                <h2 className="mb-3 flex items-center gap-2 font-semibold"><Globe className="h-4 w-4 text-primary" /> Sources</h2>
+                <ul className="space-y-1.5 text-sm">
+                  {sources.map((s) => (
+                    <li key={s.url}><a href={s.url} target="_blank" rel="noreferrer" className="text-primary underline break-all">{s.title}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
       </div>
